@@ -16,10 +16,10 @@
     --empty: #1b2240;
     --text: #ece6f1;
     --muted: #877d96;
-    --scale: 70%;           /* widget width as a share of the embed: change to resize */
   }
   * { box-sizing: border-box; margin: 0; padding: 0; }
   html, body {
+    width: 100%;
     height: 100%;
     background: var(--bg);
     color-scheme: dark;
@@ -29,12 +29,16 @@
   }
   body {
     display: flex;
-    align-items: center;
-    justify-content: center;
+    align-items: center;       /* centred vertically */
+    justify-content: center;   /* centred horizontally */
   }
+
+  /* The widget is drawn at a fixed size, then scaled as a whole by the script below */
   .wrap {
-    width: var(--scale);
-    padding: 10px 11px 7px;
+    width: 500px;
+    flex: none;
+    padding: 12px 12px 10px;
+    transform-origin: center center;
   }
   .grid {
     display: grid;
@@ -62,17 +66,17 @@
     display: flex;
     justify-content: space-between;
     align-items: baseline;
-    margin-top: 8px;
-    font-size: 10px;
+    margin-top: 10px;
+    font-size: 12px;
     font-weight: 600;
   }
-  .footer .year { color: var(--text); letter-spacing: .4px; }
+  .footer .year { color: var(--text); letter-spacing: .5px; }
   .footer .left { color: var(--blue-glow); }
-  .footer .left span { color: var(--muted); font-weight: 500; margin-left: 6px; }
+  .footer .left span { color: var(--muted); font-weight: 500; margin-left: 8px; }
 </style>
 </head>
 <body>
-  <div class="wrap">
+  <div class="wrap" id="wrap">
     <div class="grid" id="grid"></div>
     <div class="footer">
       <div class="year" id="year"></div>
@@ -81,6 +85,28 @@
   </div>
 
 <script>
+  /* ---------- SIZE ----------
+     1   = default size
+     1.2 = 20% bigger, 0.8 = 20% smaller, and so on.
+     You can also change it without editing this file by adding ?scale=1.2
+     to the end of the embed link in Notion.
+     The widget always shrinks automatically if the embed block is too small
+     for it, so it never gets cut off. */
+  var DEFAULT_SCALE = 1;
+
+  var wrap = document.getElementById("wrap");
+
+  function getScale() {
+    var s = parseFloat(new URLSearchParams(location.search).get("scale"));
+    return (s > 0 && isFinite(s)) ? s : DEFAULT_SCALE;
+  }
+
+  function fit() {
+    var w = wrap.offsetWidth, h = wrap.offsetHeight;
+    var s = Math.min(getScale(), window.innerWidth / w, window.innerHeight / h);
+    wrap.style.transform = "scale(" + s + ")";
+  }
+
   function render() {
     var now = new Date();
     var year = now.getFullYear();
@@ -105,9 +131,11 @@
     document.getElementById("year").textContent = year;
     document.getElementById("left").textContent = left + (left === 1 ? " day left" : " days left");
     document.getElementById("pct").textContent = Math.round((dayOfYear / total) * 100) + "%";
+    fit();
   }
 
   render();
+  window.addEventListener("resize", fit);
   // Re-check every minute so it rolls over at midnight and into the new year by itself
   setInterval(render, 60000);
 </script>
