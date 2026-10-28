@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="dark">
+<title>Year Progress</title>
+<style>
+  :root {
+    color-scheme: dark;
+    --bg: #191919;          /* Notion dark background */
+    --red: #e11d48;
+    --red-deep: #8f1429;
+    --blue: #3b82f6;
+    --blue-glow: #60a5fa;
+    --empty: #1b2240;
+    --text: #ece6f1;
+    --muted: #877d96;
+    --size: 420px;          /* widget width: change this to resize everything */
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body {
+    height: 100%;
+    background: var(--bg);
+    color-scheme: dark;
+    font-family: -apple-system, BlinkMacSystemFont, "Inter", "Segoe UI", sans-serif;
+    color: var(--text);
+    overflow: hidden;
+  }
+  body {
+    display: flex;
+    align-items: center;      /* vertical centre */
+    justify-content: center;  /* horizontal centre */
+  }
+  .wrap {
+    width: 100%;
+    max-width: var(--size);
+    padding: 12px 16px 10px;
+  }
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(32, 1fr);
+    gap: 4px;
+  }
+  .dot {
+    aspect-ratio: 1 / 1;
+    border-radius: 50%;
+    background: var(--empty);
+  }
+  .dot.done {
+    background: linear-gradient(135deg, var(--red) 0%, var(--red-deep) 100%);
+  }
+  .dot.today {
+    background: var(--blue);
+    box-shadow: 0 0 6px 1px var(--blue-glow);
+    animation: pulse 1.8s ease-in-out infinite;
+  }
+  @keyframes pulse {
+    0%, 100% { transform: scale(1);    box-shadow: 0 0 5px 1px var(--blue-glow); }
+    50%      { transform: scale(1.35); box-shadow: 0 0 10px 3px var(--blue-glow); }
+  }
+  .footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    margin-top: 12px;
+    font-size: 12px;
+    font-weight: 600;
+  }
+  .footer .year { color: var(--text); letter-spacing: .5px; }
+  .footer .left { color: var(--blue-glow); }
+  .footer .left span { color: var(--muted); font-weight: 500; margin-left: 8px; }
+</style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="grid" id="grid"></div>
+    <div class="footer">
+      <div class="year" id="year"></div>
+      <div class="left"><b id="left"></b><span id="pct"></span></div>
+    </div>
+  </div>
+
+<script>
+  function render() {
+    var now = new Date();
+    var year = now.getFullYear();
+    var isLeap = (year % 4 === 0 && year % 100 !== 0) || year % 400 === 0;
+    var total = isLeap ? 366 : 365;
+
+    // Day of year from the local calendar date (safe across daylight saving)
+    var dayOfYear = Math.round(
+      (Date.UTC(year, now.getMonth(), now.getDate()) - Date.UTC(year, 0, 1)) / 86400000
+    ) + 1;
+
+    var html = "";
+    for (var i = 1; i <= total; i++) {
+      var cls = "dot";
+      if (i < dayOfYear) cls += " done";
+      else if (i === dayOfYear) cls += " today";
+      html += '<div class="' + cls + '"></div>';
+    }
+    document.getElementById("grid").innerHTML = html;
+
+    var left = total - dayOfYear;
+    document.getElementById("year").textContent = year;
+    document.getElementById("left").textContent = left + (left === 1 ? " day left" : " days left");
+    document.getElementById("pct").textContent = Math.round((dayOfYear / total) * 100) + "%";
+  }
+
+  render();
+  // Re-check every minute so it rolls over at midnight and into the new year by itself
+  setInterval(render, 60000);
+</script>
+</body>
+</html>
