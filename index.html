@@ -8,42 +8,35 @@
 <style>
   :root {
     color-scheme: dark;
-    --bg: #191919;          /* Notion dark background */
     --red: #e11d48;
-    --red-deep: #8f1429;
+    --red-deep: #7f1022;
     --blue: #3b82f6;
     --blue-glow: #60a5fa;
-    --empty: #1b2240;
-    --text: #ece6f1;
-    --muted: #877d96;
+    --empty: #141a33;
+    --card: #0b0710;
+    --border: #2a1530;
+    --text: #f1e9f5;
+    --muted: #8b7f9a;
   }
   * { box-sizing: border-box; margin: 0; padding: 0; }
   html, body {
-    width: 100%;
-    height: 100%;
-    background: var(--bg);
+    background: #191919;
     color-scheme: dark;
     font-family: -apple-system, BlinkMacSystemFont, "Inter", "Segoe UI", sans-serif;
     color: var(--text);
-    overflow: hidden;
   }
-  body {
-    display: flex;
-    align-items: center;       /* centred vertically */
-    justify-content: center;   /* centred horizontally */
-  }
-
-  /* The widget is drawn at a fixed size, then scaled as a whole by the script below */
-  .wrap {
-    width: 500px;
-    flex: none;
-    padding: 12px 12px 10px;
-    transform-origin: center center;
+  .card {
+    background: radial-gradient(120% 120% at 0% 0%, #1a0a14 0%, var(--card) 55%, #070b1c 100%);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 22px 24px 18px;
+    max-width: 560px;
+    margin: 8px auto;
   }
   .grid {
     display: grid;
-    grid-template-columns: repeat(40, 1fr);
-    gap: 3px;
+    grid-template-columns: repeat(21, 1fr);
+    gap: 7px;
   }
   .dot {
     aspect-ratio: 1 / 1;
@@ -55,19 +48,19 @@
   }
   .dot.today {
     background: var(--blue);
-    box-shadow: 0 0 5px 1px var(--blue-glow);
+    box-shadow: 0 0 0 2px rgba(96,165,250,.25), 0 0 10px 2px var(--blue-glow);
     animation: pulse 1.8s ease-in-out infinite;
   }
   @keyframes pulse {
-    0%, 100% { transform: scale(1);   box-shadow: 0 0 4px 1px var(--blue-glow); }
-    50%      { transform: scale(1.3); box-shadow: 0 0 8px 2px var(--blue-glow); }
+    0%, 100% { transform: scale(1); box-shadow: 0 0 0 2px rgba(96,165,250,.25), 0 0 8px 1px var(--blue-glow); }
+    50%      { transform: scale(1.18); box-shadow: 0 0 0 4px rgba(96,165,250,.15), 0 0 16px 4px var(--blue-glow); }
   }
   .footer {
     display: flex;
     justify-content: space-between;
     align-items: baseline;
-    margin-top: 10px;
-    font-size: 12px;
+    margin-top: 18px;
+    font-size: 15px;
     font-weight: 600;
   }
   .footer .year { color: var(--text); letter-spacing: .5px; }
@@ -76,7 +69,7 @@
 </style>
 </head>
 <body>
-  <div class="wrap" id="wrap">
+  <div class="card">
     <div class="grid" id="grid"></div>
     <div class="footer">
       <div class="year" id="year"></div>
@@ -85,39 +78,18 @@
   </div>
 
 <script>
-  /* ---------- SIZE ----------
-     1   = default size
-     1.2 = 20% bigger, 0.8 = 20% smaller, and so on.
-     You can also change it without editing this file by adding ?scale=1.2
-     to the end of the embed link in Notion.
-     The widget always shrinks automatically if the embed block is too small
-     for it, so it never gets cut off. */
-  var DEFAULT_SCALE = 1;
-
-  var wrap = document.getElementById("wrap");
-
-  function getScale() {
-    var s = parseFloat(new URLSearchParams(location.search).get("scale"));
-    return (s > 0 && isFinite(s)) ? s : DEFAULT_SCALE;
-  }
-
-  function fit() {
-    var w = wrap.offsetWidth, h = wrap.offsetHeight;
-    var s = Math.min(getScale(), window.innerWidth / w, window.innerHeight / h);
-    wrap.style.transform = "scale(" + s + ")";
-  }
-
   function render() {
     var now = new Date();
     var year = now.getFullYear();
     var isLeap = (year % 4 === 0 && year % 100 !== 0) || year % 400 === 0;
     var total = isLeap ? 366 : 365;
 
-    // Day of year from the local calendar date (safe across daylight saving)
+    // Day of year using local calendar date (safe across daylight saving)
     var dayOfYear = Math.round(
       (Date.UTC(year, now.getMonth(), now.getDate()) - Date.UTC(year, 0, 1)) / 86400000
     ) + 1;
 
+    var grid = document.getElementById("grid");
     var html = "";
     for (var i = 1; i <= total; i++) {
       var cls = "dot";
@@ -125,17 +97,15 @@
       else if (i === dayOfYear) cls += " today";
       html += '<div class="' + cls + '"></div>';
     }
-    document.getElementById("grid").innerHTML = html;
+    grid.innerHTML = html;
 
     var left = total - dayOfYear;
     document.getElementById("year").textContent = year;
     document.getElementById("left").textContent = left + (left === 1 ? " day left" : " days left");
     document.getElementById("pct").textContent = Math.round((dayOfYear / total) * 100) + "%";
-    fit();
   }
 
   render();
-  window.addEventListener("resize", fit);
   // Re-check every minute so it rolls over at midnight and into the new year by itself
   setInterval(render, 60000);
 </script>
